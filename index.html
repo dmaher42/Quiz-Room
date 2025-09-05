@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Classroom Quiz Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-color);
+            transition: all 0.5s ease;
+        }
+
+        /* Theme Variables */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-color: #4CAF50;
+            --secondary-color: #FFD700;
+            --accent-color: #FF6B6B;
+            --text-color: white;
+            --card-bg: rgba(255,255,255,0.1);
+            --card-border: rgba(255,255,255,0.2);
+        }
+
+        /* Dark Theme */
+        body.dark-theme {
+            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --primary-color: #00d4aa;
+            --secondary-color: #ffd700;
+            --accent-color: #ff6b9d;
+            --text-color: #e0e0e0;
+            --card-bg: rgba(255,255,255,0.05);
+            --card-border: rgba(255,255,255,0.1);
+        }
+
+        /* School Theme */
+        body.school-theme {
+            --bg-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --primary-color: #28a745;
+            --secondary-color: #ffc107;
+            --accent-color: #dc3545;
+            --text-color: white;
+            --card-bg: rgba(255,255,255,0.15);
+            --card-border: rgba(255,255,255,0.25);
+        }
+
+        /* Sunset Theme */
+        body.sunset-theme {
+            --bg-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --accent-color: #45b7d1;
+            --text-color: #2c3e50;
+            --card-bg: rgba(255,255,255,0.3);
+            --card-border: rgba(255,255,255,0.4);
+        }
+
+        /* Ocean Theme */
+        body.ocean-theme {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --primary-color: #00b4db;
+            --secondary-color: #0083b0;
+            --accent-color: #00d2ff;
+            --text-color: white;
+            --card-bg: rgba(255,255,255,0.1);
+            --card-border: rgba(255,255,255,0.2);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .connection-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .connected {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4CAF50;
+        }
+
+        .disconnected {
+            background: rgba(244, 67, 54, 0.3);
+            border: 2px solid #f44336;
+        }
+
+        .game-id-section {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .game-id {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 10px 0;
+            letter-spacing: 3px;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .mode-btn.active {
+            background: #4CAF50;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .mode-btn:not(.active) {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .panel {
+            display: none;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* Presenter Panel Styles */
+        .current-question {
+            background: rgba(255,255,255,0.2);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .question-number {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .timer-section {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD700;
+            background: rgba(0,0,0,0.3);
+            padding: 15px 30px;
+            border-radius: 15px;
+            min-width: 120px;
+        }
+
+        .timer-display.warning {
+            color: #FF6B6B;
+            animation: timer-pulse 1s infinite;
+        }
+
+        @keyframes timer-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .timer-btn {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .timer-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .multiple-choice {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .choice-option {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            text-align: left;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .choice-option.correct {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4CAF50;
+        }
+
+        .choice-label {
+            font-weight: bold;
+            color: #FFD700;
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .team-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .team-card:hover::before {
+            left: 100%;
+        }
+
+        .team-avatar {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+            animation: bounce-in 0.6s ease-out;
+        }
+
+        .team-card.buzzed {
+            background: #FF6B6B;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255,107,107,0.4);
+            animation: buzz-flash 0.5s ease-in-out;
+        }
+
+        .team-card.selected {
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes buzz-flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .team-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .team-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .buzz-indicator {
+            margin-top: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-info { background: #2196F3; color: white; }
+
+        /* Player Panel Styles */
+        .player-setup {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .join-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .join-form input {
+            padding: 12px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .buzz-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: none;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            box-shadow: 0 10px 30px rgba(255,107,107,0.3);
+        }
+
+        .buzz-button:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(255,107,107,0.5);
+        }
+
+        .buzz-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .buzz-button.buzzed {
+            background: #4CAF50;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .player-status {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        /* Quiz Builder Styles */
+        .quiz-builder {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .question-form {
+            background: rgba(255,255,255,0.2);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .choices-section {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .choices-section.active {
+            display: block;
+        }
+
+        .choice-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .choice-input input[type="text"] {
+            flex: 1;
+        }
+
+        .choice-input input[type="radio"] {
+            width: auto;
+        }
+
+        .questions-list {
+            margin-top: 30px;
+        }
+
+        .question-item {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .question-preview {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .wager-section {
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .wager-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .wager-btn {
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            background: #FFD700;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .wager-btn:hover {
+            background: #FFC107;
+            transform: scale(1.05);
+        }
+
+        .wager-btn.selected {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .bonus-indicator {
+            background: linear-gradient(45deg, #FF6B6B, #FFD700);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px 0;
+            animation: bonus-glow 2s infinite;
+        }
+
+        @keyframes bonus-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 107, 107, 0.7); }
+        }
+
+        .challenge-section {
+            background: rgba(138, 43, 226, 0.2);
+            border: 2px solid #8A2BE2;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .challenge-progress {
+            background: rgba(255,255,255,0.2);
+            height: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .challenge-progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #8A2BE2, #FF6B6B);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .quickfire-section {
+            background: rgba(255, 69, 0, 0.2);
+            border: 2px solid #FF4500;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .quickfire-timer {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #FF4500;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .quickfire-timer.critical {
+            color: #FF0000;
+            animation: critical-pulse 0.5s infinite;
+        }
+
+        @keyframes critical-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Celebration Animations */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        @keyframes score-celebration {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(5deg); }
+            50% { transform: scale(1.1) rotate(-5deg); }
+            75% { transform: scale(1.15) rotate(3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes correct-answer-glow {
+            0% { box-shadow: 0 0 20px var(--primary-color); }
+            50% { box-shadow: 0 0 40px var(--primary-color), 0 0 60px var(--primary-color); }
+            100% { box-shadow: 0 0 20px var(--primary-color); }
+        }
+
+        @keyframes slide-in-up {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--secondary-color);
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        .celebrating {
+            animation: score-celebration 0.8s ease-in-out;
+        }
+
+        .correct-glow {
+            animation: correct-answer-glow 2s ease-in-out;
+        }
+
+        .slide-in {
+            animation: slide-in-up 0.5s ease-out;
+        }
+
+        .team-card.no-animation {
+            animation: none !important;
+        }
+
+        .bounce-in {
+            animation: bounce-in 0.6s ease-out;
+        }
+
+        .shake-wrong {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .mode-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .game-mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .game-mode-btn {
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .game-mode-btn.active {
+            background: #4CAF50;
+            transform: scale(1.05);
+        }
+
+        .game-mode-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .deployment-info {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .deployment-info h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .deployment-info ol, .deployment-info ul {
+            margin-left: 20px;
+        }
+
+        .deployment-info li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        /* Password Protection Modal Styles */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+
+        .password-modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 2px solid var(--card-border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modal-slide-in 0.3s ease-out;
+        }
+
+        @keyframes modal-slide-in {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .password-form {
+            margin: 25px 0;
+        }
+
+        .password-form input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .password-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .password-hint {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .password-hint code {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .access-denied {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+            color: #ff6b6b;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .access-granted {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            color: #4CAF50;
+        }
+
+        .password-settings {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .password-settings h3 {
+            color: #FFD700;
+            margin-bottom: 20px;
+        }
+
+        /* Theme Selector Styles */
+        .theme-selector {
+            text-align: center;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+        }
+
+        .theme-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .theme-btn {
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-color);
+        }
+
+        .theme-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Quiz Progress Bar */
+        .quiz-progress-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .quiz-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--card-bg);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid var(--card-border);
+        }
+
+        .quiz-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .quiz-progress-text {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        /* Avatar Selection Styles */
+        .avatar-selection {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+        }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .avatar-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+        }
+
+        .avatar-btn.selected {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        #team-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #team-avatar {
+            font-size: 2rem;
+            animation: bounce-in 0.6s ease-out;
+        }
+
+        .room-info {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #FFD700;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .copy-success {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4CAF50;
+            animation: success-flash 0.5s ease-in-out;
+        }
+
+        @keyframes success-flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @media (max-width: 768px) {
+            .teams-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .join-form {
+                flex-direction: column;
+            }
+
+            .multiple-choice {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-section {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Confetti Container -->
+    <div class="confetti-container" id="confetti-container"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Real-Time Quiz Platform</h1>
+            <p>Interactive multi-device quiz system with private rooms</p>
+        </div>
+
+        <div id="connection-status" class="connection-status connected">
+            🟢 All devices connected to same game
+        </div>
+
+        <div class="game-id-section">
+            <h3>🎮 Your Private Game Room</h3>
+            <div class="game-id" id="game-id">QUIZ01</div>
+            <div style="margin: 15px 0;">
+                <button class="control-btn btn-primary" onclick="generateNewGameId()" style="margin: 5px;">🎲 Generate New Room</button>
+                <button class="control-btn btn-info" onclick="copyGameId()" style="margin: 5px;">📋 Copy Room ID</button>
+            </div>
+            <p><strong>Students use this Room ID to join YOUR quiz</strong></p>
+            <p style="font-size: 0.9rem; opacity: 0.8;">💡 Each teacher gets a unique room - no conflicts!</p>
+            
+            <div class="room-info" id="room-info">
+                <strong>🔒 Private Room Benefits:</strong><br>
+                ✅ Only your students can join<br>
+                ✅ No interference from other classes<br>
+                ✅ Your quiz stays completely separate
+            </div>
+        </div>
+
+        <!-- Theme Selector -->
+        <div class="theme-selector">
+            <h3>🎨 Choose Theme</h3>
+            <div class="theme-buttons">
+                <button class="theme-btn active" onclick="setTheme('default')">🌟 Default</button>
+                <button class="theme-btn" onclick="setTheme('dark')">🌙 Dark</button>
+                <button class="theme-btn" onclick="setTheme('school')">🏫 School</button>
+                <button class="theme-btn" onclick="setTheme('sunset')">🌅 Sunset</button>
+                <button class="theme-btn" onclick="setTheme('ocean')">🌊 Ocean</button>
+            </div>
+        </div>
+
+        <!-- Quiz Progress Bar -->
+        <div class="quiz-progress-container">
+            <div class="quiz-progress-bar">
+                <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+            </div>
+            <div class="quiz-progress-text" id="quiz-progress-text">Question 1 of 5</div>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('presenter')">📺 Presenter Panel</button>
+            <button class="mode-btn" onclick="switchMode('player')">🎮 Player Buzzer</button>
+            <button class="mode-btn" onclick="switchMode('builder')">📝 Quiz Builder</button>
+        </div>
+
+        <!-- Password Protection Modal -->
+        <div id="password-modal" class="password-modal" style="display: none;">
+            <div class="password-modal-content">
+                <h3>🔒 Teacher Access Required</h3>
+                <p>This section is protected. Please enter the presenter password:</p>
+                <div class="password-form">
+                    <input type="password" id="password-input" placeholder="Enter password" maxlength="20">
+                    <div class="password-buttons">
+                        <button class="control-btn btn-primary" onclick="checkPassword()">Unlock</button>
+                        <button class="control-btn btn-danger" onclick="closePasswordModal()">Cancel</button>
+                    </div>
+                </div>
+                <div class="password-hint">
+                    <p><strong>💡 Default Password:</strong> <code>TEACHER</code></p>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">Teachers can change this in the Quiz Builder settings</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode Indicator -->
+        <div class="mode-indicator" id="mode-indicator">Standard Mode</div>
+
+        <!-- Presenter Panel -->
+        <div id="presenter-panel" class="panel active">
+            <!-- Game Mode Selector -->
+            <div class="game-mode-selector">
+                <button class="game-mode-btn active" onclick="setGameMode('standard')">🎯 Standard</button>
+                <button class="game-mode-btn" onclick="setGameMode('wager')">💰 Wager</button>
+                <button class="game-mode-btn" onclick="setGameMode('bonus')">🏆 Bonus Round</button>
+                <button class="game-mode-btn" onclick="setGameMode('challenge')">🤝 Team Challenge</button>
+                <button class="game-mode-btn" onclick="setGameMode('quickfire')">⚡ Quick Fire</button>
+            </div>
+
+            <div class="current-question">
+                <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-questions">5</span></div>
+                <div class="question-text" id="current-question-text">Click "Next Question" to start the quiz!</div>
+                
+                <!-- Timer Section -->
+                <div class="timer-section">
+                    <div class="timer-display" id="timer-display">--</div>
+                    <div class="timer-controls">
+                        <button class="timer-btn" onclick="startTimer(30)">30s</button>
+                        <button class="timer-btn" onclick="startTimer(60)">60s</button>
+                        <button class="timer-btn" onclick="startTimer(90)">90s</button>
+                        <button class="timer-btn" onclick="pauseTimer()">⏸️ Pause</button>
+                        <button class="timer-btn" onclick="stopTimer()">⏹️ Stop</button>
+                    </div>
+                </div>
+
+                <!-- Multiple Choice Options -->
+                <div class="multiple-choice" id="multiple-choice-display" style="display: none;">
+                    <!-- Choices will be populated here -->
+                </div>
+
+                <!-- Wager Section -->
+                <div class="wager-section" id="wager-section" style="display: none;">
+                    <h3>💰 Wager Mode Active</h3>
+                    <p>Teams can bet points on their confidence level!</p>
+                    <div class="wager-controls">
+                        <button class="control-btn btn-warning" onclick="enableWagers()">Enable Wagering</button>
+                        <button class="control-btn btn-info" onclick="showWagers()">Show All Wagers</button>
+                        <button class="control-btn btn-danger" onclick="lockWagers()">Lock Wagers</button>
+                    </div>
+                </div>
+
+                <!-- Bonus Round Section -->
+                <div class="bonus-indicator" id="bonus-indicator" style="display: none;">
+                    🏆 BONUS ROUND - Double Points Available! 🏆
+                </div>
+
+                <!-- Team Challenge Section -->
+                <div class="challenge-section" id="challenge-section" style="display: none;">
+                    <h3>🤝 Team Challenge Mode</h3>
+                    <p>Teams work together to solve this puzzle!</p>
+                    <div class="challenge-progress">
+                        <div class="challenge-progress-bar" id="challenge-progress" style="width: 0%;"></div>
+                    </div>
+                    <p>Progress: <span id="challenge-percentage">0</span>% Complete</p>
+                </div>
+
+                <!-- Quick Fire Section -->
+                <div class="quickfire-section" id="quickfire-section" style="display: none;">
+                    <h3>⚡ QUICK FIRE ROUND ⚡</h3>
+                    <div class="quickfire-timer" id="quickfire-timer">10</div>
+                    <p>Rapid-fire questions - First to buzz wins!</p>
+                </div>
+            </div>
+
+            <div class="teams-grid" id="teams-display">
+                <!-- Teams will be populated here -->
+            </div>
+
+            <div class="controls">
+                <button class="control-btn btn-info" onclick="previousQuestion()">⬅️ Previous</button>
+                <button class="control-btn btn-primary" onclick="nextQuestion()">Next Question ➡️</button>
+                <button class="control-btn btn-warning" onclick="showAnswer()">💡 Show Answer</button>
+                <button class="control-btn btn-warning" onclick="lockBuzzers()">🔒 Lock Buzzers</button>
+                <button class="control-btn btn-info" onclick="unlockBuzzers()">🔓 Unlock Buzzers</button>
+                <button class="control-btn btn-danger" onclick="resetBuzzers()">🔄 Reset Buzzers</button>
+                <button class="control-btn btn-info" onclick="addPoint()">➕ Add Point</button>
+                <button class="control-btn btn-warning" onclick="subtractPoint()">➖ Subtract Point</button>
+                <button class="control-btn btn-danger" onclick="newGame()">🆕 New Game</button>
+            </div>
+        </div>
+
+        <!-- Player Panel -->
+        <div id="player-panel" class="panel">
+            <div class="player-setup" id="player-setup">
+                <h2>🎮 Join the Quiz</h2>
+                <div class="join-form">
+                    <input type="text" id="game-id-input" placeholder="Enter Room ID (e.g. ABC123)" maxlength="6" style="text-transform: uppercase;">
+                    <input type="text" id="player-name" placeholder="Enter your team name" maxlength="20">
+                    <button class="control-btn btn-primary" onclick="joinGame()">Join Game</button>
+                </div>
+                <p style="font-size: 0.9rem; opacity: 0.8;">💡 Get the Room ID from your teacher's screen</p>
+            </div>
+
+            <div id="buzzer-area" style="display: none;">
+                <!-- Avatar Selection -->
+                <div class="avatar-selection" id="avatar-selection">
+                    <h3>🎭 Choose Your Team Avatar</h3>
+                    <div class="avatar-grid">
+                        <button class="avatar-btn" onclick="selectAvatar('🦁')">🦁</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🐯')">🐯</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🐻')">🐻</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🦊')">🦊</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🐺')">🐺</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🦅')">🦅</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🐉')">🐉</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🦄')">🦄</button>
+                        <button class="avatar-btn" onclick="selectAvatar('⚡')">⚡</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🔥')">🔥</button>
+                        <button class="avatar-btn" onclick="selectAvatar('💎')">💎</button>
+                        <button class="avatar-btn" onclick="selectAvatar('🌟')">🌟</button>
+                    </div>
+                </div>
+                
+                <h2 id="team-display">
+                    <span id="team-avatar">🎯</span>
+                    <span id="team-name-display">Team Name</span>
+                </h2>
+                
+                <!-- Wager Controls for Players -->
+                <div class="wager-section" id="player-wager-section" style="display: none;">
+                    <h3>💰 Place Your Wager</h3>
+                    <p>Current Score: <span id="player-score">0</span> points</p>
+                    <div class="wager-controls">
+                        <button class="wager-btn" onclick="selectWager(1)">1 pt</button>
+                        <button class="wager-btn" onclick="selectWager(2)">2 pts</button>
+                        <button class="wager-btn" onclick="selectWager(3)">3 pts</button>
+                        <button class="wager-btn" onclick="selectWager(5)">5 pts</button>
+                        <button class="wager-btn" onclick="selectWager('all')">All In!</button>
+                    </div>
+                    <p id="wager-status">Select your wager amount</p>
+                </div>
+
+                <button class="buzz-button" id="buzz-btn" onclick="buzzIn()">
+                    BUZZ!
+                </button>
+                <div class="player-status" id="player-status">
+                    Ready to buzz in!
+                </div>
+                <button class="control-btn btn-warning" onclick="leaveGame()" style="margin-top: 20px;">Leave Game</button>
+            </div>
+        </div>
+
+        <!-- Quiz Builder Panel -->
+        <div id="builder-panel" class="panel">
+            <div class="quiz-builder">
+                <h2>📝 Quiz Builder</h2>
+                
+                <div class="question-form">
+                    <div class="form-group">
+                        <label for="question-type">Question Type:</label>
+                        <select id="question-type" onchange="toggleQuestionType()">
+                            <option value="open">Open Question (Buzzer)</option>
+                            <option value="multiple">Multiple Choice</option>
+                            <option value="bonus">Bonus Round (Double Points)</option>
+                            <option value="challenge">Team Challenge</option>
+                            <option value="quickfire">Quick Fire</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="question-input">Question:</label>
+                        <textarea id="question-input" placeholder="Enter your question here..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="answer-input">Answer:</label>
+                        <input type="text" id="answer-input" placeholder="Enter the answer">
+                    </div>
+
+                    <!-- Multiple Choice Section -->
+                    <div class="choices-section" id="choices-section">
+                        <label>Answer Choices:</label>
+                        <div class="choice-input">
+                            <span class="choice-label">A)</span>
+                            <input type="text" id="choice-a" placeholder="Choice A">
+                            <input type="radio" name="correct-choice" value="A" id="correct-a">
+                            <label for="correct-a">Correct</label>
+                        </div>
+                        <div class="choice-input">
+                            <span class="choice-label">B)</span>
+                            <input type="text" id="choice-b" placeholder="Choice B">
+                            <input type="radio" name="correct-choice" value="B" id="correct-b">
+                            <label for="correct-b">Correct</label>
+                        </div>
+                        <div class="choice-input">
+                            <span class="choice-label">C)</span>
+                            <input type="text" id="choice-c" placeholder="Choice C">
+                            <input type="radio" name="correct-choice" value="C" id="correct-c">
+                            <label for="correct-c">Correct</label>
+                        </div>
+                        <div class="choice-input">
+                            <span class="choice-label">D)</span>
+                            <input type="text" id="choice-d" placeholder="Choice D">
+                            <input type="radio" name="correct-choice" value="D" id="correct-d">
+                            <label for="correct-d">Correct</label>
+                        </div>
+                    </div>
+                    
+                    <button class="control-btn btn-primary" onclick="addQuestion()">➕ Add Question</button>
+                    <button class="control-btn btn-info" onclick="loadSampleQuiz()">📚 Load Sample Quiz</button>
+                    <button class="control-btn btn-warning" onclick="clearQuiz()">🗑️ Clear All</button>
+                </div>
+
+                <div class="questions-list">
+                    <h3>Current Quiz Questions (<span id="question-count">0</span>)</h3>
+                    <div id="questions-container">
+                        <!-- Questions will be listed here -->
+                    </div>
+                </div>
+
+                <!-- Password Settings -->
+                <div class="password-settings">
+                    <h3>🔒 Security Settings</h3>
+                    <div class="form-group">
+                        <label for="current-password">Current Password:</label>
+                        <input type="password" id="current-password" placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password:</label>
+                        <input type="password" id="new-password" placeholder="Enter new password" maxlength="20">
+                    </div>
+                    <button class="control-btn btn-warning" onclick="changePassword()">🔑 Change Password</button>
+                    <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 10px;">
+                        💡 This password protects Presenter Panel and Quiz Builder from students
+                    </p>
+                </div>
+
+                <div class="deployment-info">
+                    <h3>🔒 Private Room System</h3>
+                    <p><strong>Perfect for Multiple Teachers!</strong></p>
+                    <ul>
+                        <li><strong>🎲 Unique Room IDs:</strong> Each teacher gets their own private room (e.g., ABC123, XYZ789)</li>
+                        <li><strong>🔒 Complete Isolation:</strong> No interference between different classes</li>
+                        <li><strong>📋 Easy Sharing:</strong> Copy your Room ID and share with students</li>
+                        <li><strong>🔄 Generate New:</strong> Create fresh rooms anytime for different classes</li>
+                    </ul>
+                    
+                    <h3>🚀 Advanced Game Modes Added!</h3>
+                    <ul>
+                        <li><strong>💰 Wager System:</strong> Teams bet points based on confidence level</li>
+                        <li><strong>🏆 Bonus Rounds:</strong> Special high-value questions worth double points</li>
+                        <li><strong>🤝 Team Challenges:</strong> Collaborative puzzle rounds with progress tracking</li>
+                        <li><strong>⚡ Quick Fire Mode:</strong> Rapid-fire questions with countdown timers</li>
+                        <li><strong>⏱️ Timer System:</strong> Set 30s, 60s, or 90s countdowns for questions</li>
+                        <li><strong>📝 Multiple Choice:</strong> Create A/B/C/D questions with visual options</li>
+                    </ul>
+                    
+                    <h3>🎮 How to Use Game Modes:</h3>
+                    <ol>
+                        <li><strong>Standard Mode:</strong> Regular buzzer questions with timers</li>
+                        <li><strong>Wager Mode:</strong> Teams bet points before answering</li>
+                        <li><strong>Bonus Round:</strong> High-stakes questions worth double points</li>
+                        <li><strong>Team Challenge:</strong> Collaborative questions where teams work together</li>
+                        <li><strong>Quick Fire:</strong> Fast-paced rounds with 10-second timers</li>
+                    </ol>
+                    
+                    <h3>🔒 Security Features Added!</h3>
+                    <ul>
+                        <li><strong>🛡️ Password Protection:</strong> Presenter Panel and Quiz Builder are now locked</li>
+                        <li><strong>🔑 Default Password:</strong> "TEACHER" (change this in Security Settings above)</li>
+                        <li><strong>👨‍🎓 Student Access:</strong> Only Player Buzzer mode is available without password</li>
+                        <li><strong>🔄 Per-Room Passwords:</strong> Each room can have its own unique password</li>
+                        <li><strong>⚡ No Cheating:</strong> Students cannot access quiz answers or controls</li>
+                    </ul>
+                    
+                    <h3>🚀 How to Deploy This Quiz</h3>
+                    <ol>
+                        <li><strong>Click "Use in a design" above</strong> - This opens Canva editor</li>
+                        <li><strong>Click "Publish website"</strong> - Get your live URL instantly</li>
+                        <li><strong>Share URL with colleagues</strong> - Each gets their own private room</li>
+                        <li><strong>Teachers use password "TEACHER"</strong> - Access Presenter Panel (change password in settings)</li>
+                        <li><strong>Students use Player Buzzer</strong> - No password needed, join with Room ID</li>
+                        <li><strong>All devices sync automatically</strong> - Real-time buzzing within each room!</li>
+                    </ol>
+                    
+                    <h3>🔐 Security Best Practices</h3>
+                    <ol>
+                        <li><strong>Change Default Password:</strong> Use Security Settings above to set a unique password</li>
+                        <li><strong>Share Password Securely:</strong> Only give the password to teachers, not students</li>
+                        <li><strong>Different Passwords:</strong> Each room can have its own password for extra security</li>
+                        <li><strong>Student Instructions:</strong> Tell students to only use "Player Buzzer" mode</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate random game ID for each teacher
+        function generateRandomGameId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Shared game state using localStorage for persistence across page reloads
+        let GAME_ID = localStorage.getItem('current-game-id') || generateRandomGameId();
+        let currentTeamId = null;
+        let updateInterval = null;
+        let timerInterval = null;
+        let currentTime = 0;
+        let timerRunning = false;
+        let currentGameMode = 'standard';
+        let quickfireInterval = null;
+        let quickfireTime = 10;
+
+        // Save the current game ID
+        localStorage.setItem('current-game-id', GAME_ID);
+
+        // Room Management Functions
+        function generateNewGameId() {
+            const newId = generateRandomGameId();
+            GAME_ID = newId;
+            localStorage.setItem('current-game-id', GAME_ID);
+            
+            // Clear any existing game data for the old room
+            const oldGameData = getGameData();
+            if (oldGameData) {
+                localStorage.removeItem(`game_${oldGameData.gameId || 'QUIZ01'}`);
+            }
+            
+            // Reset current team if they were joined
+            currentTeamId = null;
+            
+            // Update UI
+            document.getElementById('game-id').textContent = GAME_ID;
+            document.getElementById('game-id-input').value = GAME_ID;
+            
+            // Reset player interface
+            document.getElementById('player-setup').style.display = 'block';
+            document.getElementById('buzzer-area').style.display = 'none';
+            document.getElementById('player-name').value = '';
+            
+            // Show success message
+            const roomInfo = document.getElementById('room-info');
+            roomInfo.classList.add('copy-success');
+            roomInfo.innerHTML = `
+                <strong>🎉 New Private Room Created!</strong><br>
+                Room ID: <strong>${GAME_ID}</strong><br>
+                Share this ID with your students
+            `;
+            
+            setTimeout(() => {
+                roomInfo.classList.remove('copy-success');
+                roomInfo.innerHTML = `
+                    <strong>🔒 Private Room Benefits:</strong><br>
+                    ✅ Only your students can join<br>
+                    ✅ No interference from other classes<br>
+                    ✅ Your quiz stays completely separate
+                `;
+            }, 3000);
+            
+            updateAllDisplays();
+        }
+
+        function copyGameId() {
+            // Try to copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(GAME_ID).then(() => {
+                    showCopySuccess();
+                }).catch(() => {
+                    fallbackCopy();
+                });
+            } else {
+                fallbackCopy();
+            }
+        }
+
+        function fallbackCopy() {
+            // Fallback for older browsers or non-HTTPS
+            const textArea = document.createElement('textarea');
+            textArea.value = GAME_ID;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopySuccess();
+            } catch (err) {
+                // If all else fails, show the ID in an alert
+                alert(`Room ID: ${GAME_ID}\n\nShare this with your students!`);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess() {
+            const roomInfo = document.getElementById('room-info');
+            roomInfo.classList.add('copy-success');
+            roomInfo.innerHTML = `
+                <strong>📋 Copied to Clipboard!</strong><br>
+                Room ID: <strong>${GAME_ID}</strong><br>
+                Paste this in your message to students
+            `;
+            
+            setTimeout(() => {
+                roomInfo.classList.remove('copy-success');
+                roomInfo.innerHTML = `
+                    <strong>🔒 Private Room Benefits:</strong><br>
+                    ✅ Only your students can join<br>
+                    ✅ No interference from other classes<br>
+                    ✅ Your quiz stays completely separate
+                `;
+            }, 3000);
+        }
+
+        // Theme Management
+        function setTheme(theme) {
+            // Remove all theme classes
+            document.body.classList.remove('dark-theme', 'school-theme', 'sunset-theme', 'ocean-theme');
+            
+            // Add new theme class
+            if (theme !== 'default') {
+                document.body.classList.add(theme + '-theme');
+            }
+            
+            // Update active button
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Save theme preference
+            localStorage.setItem('quiz-theme', theme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('quiz-theme') || 'default';
+            if (savedTheme !== 'default') {
+                document.body.classList.add(savedTheme + '-theme');
+            }
+            
+            // Update button state
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(savedTheme)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Confetti Animation
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                
+                container.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Celebration Effects
+        function celebrateCorrectAnswer(teamElement) {
+            // Add celebration class
+            teamElement.classList.add('celebrating', 'correct-glow');
+            
+            // Create confetti
+            createConfetti();
+            
+            // Remove classes after animation
+            setTimeout(() => {
+                teamElement.classList.remove('celebrating', 'correct-glow');
+            }, 2000);
+        }
+
+        function shakeWrongAnswer(teamElement) {
+            teamElement.classList.add('shake-wrong');
+            setTimeout(() => {
+                teamElement.classList.remove('shake-wrong');
+            }, 500);
+        }
+
+        // Avatar Selection
+        function selectAvatar(emoji) {
+            if (!currentTeamId) return;
+            
+            const gameData = getGameData();
+            const team = gameData.teams.find(t => t.id === currentTeamId);
+            if (team) {
+                team.avatar = emoji;
+                saveGameData(gameData);
+                
+                // Update UI
+                document.getElementById('team-avatar').textContent = emoji;
+                document.getElementById('avatar-selection').style.display = 'none';
+                
+                // Update button states
+                document.querySelectorAll('.avatar-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                    if (btn.textContent === emoji) {
+                        btn.classList.add('selected');
+                    }
+                });
+            }
+        }
+
+        // Progress Bar Update
+        function updateProgressBar() {
+            const gameData = getGameData();
+            const progress = ((gameData.currentQuestion + 1) / Math.max(1, gameData.questions.length)) * 100;
+            
+            const progressFill = document.getElementById('quiz-progress-fill');
+            const progressText = document.getElementById('quiz-progress-text');
+            
+            if (progressFill) {
+                progressFill.style.width = progress + '%';
+            }
+            
+            if (progressText) {
+                progressText.textContent = `Question ${gameData.currentQuestion + 1} of ${Math.max(1, gameData.questions.length)}`;
+            }
+        }
+
+        // Game state management
+        function getGameData() {
+            const data = localStorage.getItem(`game_${GAME_ID}`);
+            if (!data) {
+                // Initialize default game with mixed question types
+                const defaultGame = {
+                    gameId: GAME_ID,
+                    teams: [],
+                    currentQuestion: 0,
+                    questions: [
+                        { 
+                            text: "What is the capital of Australia?", 
+                            answer: "Canberra",
+                            type: "open"
+                        },
+                        { 
+                            text: "How many sides does a hexagon have?", 
+                            answer: "6",
+                            type: "multiple",
+                            choices: ["4", "5", "6", "8"],
+                            correctChoice: "C"
+                        },
+                        { 
+                            text: "What gas do plants absorb from the atmosphere?", 
+                            answer: "Carbon dioxide",
+                            type: "open"
+                        },
+                        { 
+                            text: "Who wrote 'Romeo and Juliet'?", 
+                            answer: "William Shakespeare",
+                            type: "multiple",
+                            choices: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                            correctChoice: "B"
+                        },
+                        { 
+                            text: "What is 7 × 8?", 
+                            answer: "56",
+                            type: "open"
+                        }
+                    ],
+                    buzzersLocked: false,
+                    buzzOrder: [],
+                    selectedTeam: null,
+                    showingAnswer: false,
+                    gameMode: 'standard',
+                    wageringEnabled: false,
+                    wagersLocked: false,
+                    challengeProgress: 0,
+                    lastUpdated: Date.now()
+                };
+                saveGameData(defaultGame);
+                return defaultGame;
+            }
+            return JSON.parse(data);
+        }
+
+        function saveGameData(gameData) {
+            gameData.lastUpdated = Date.now();
+            gameData.gameId = GAME_ID; // Ensure game ID is always current
+            localStorage.setItem(`game_${GAME_ID}`, JSON.stringify(gameData));
+        }
+
+        // Timer Functions
+        function startTimer(seconds) {
+            currentTime = seconds;
+            timerRunning = true;
+            
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                if (timerRunning && currentTime > 0) {
+                    currentTime--;
+                    updateTimerDisplay();
+                    
+                    if (currentTime === 0) {
+                        timerRunning = false;
+                        // Auto-lock buzzers when time runs out
+                        lockBuzzers();
+                    }
+                }
+            }, 1000);
+            
+            updateTimerDisplay();
+        }
+
+        function pauseTimer() {
+            timerRunning = !timerRunning;
+        }
+
+        function stopTimer() {
+            timerRunning = false;
+            currentTime = 0;
+            updateTimerDisplay();
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            const display = document.getElementById('timer-display');
+            if (currentTime === 0) {
+                display.textContent = '--';
+                display.classList.remove('warning');
+            } else {
+                const minutes = Math.floor(currentTime / 60);
+                const seconds = currentTime % 60;
+                display.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Add warning style when under 10 seconds
+                if (currentTime <= 10) {
+                    display.classList.add('warning');
+                } else {
+                    display.classList.remove('warning');
+                }
+            }
+        }
+
+        // Password Protection System
+        let isAuthenticated = false;
+        let pendingMode = null;
+        const DEFAULT_PASSWORD = 'TEACHER';
+
+        function getStoredPassword() {
+            return localStorage.getItem(`quiz_password_${GAME_ID}`) || DEFAULT_PASSWORD;
+        }
+
+        function setStoredPassword(password) {
+            localStorage.setItem(`quiz_password_${GAME_ID}`, password);
+        }
+
+        function requiresAuthentication(mode) {
+            return mode === 'presenter' || mode === 'builder';
+        }
+
+        function showPasswordModal(mode) {
+            pendingMode = mode;
+            document.getElementById('password-modal').style.display = 'flex';
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-input').focus();
+            
+            // Allow Enter key to submit
+            document.getElementById('password-input').onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            };
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').style.display = 'none';
+            pendingMode = null;
+            
+            // Reset mode buttons to current state
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            if (isAuthenticated) {
+                // Keep current authenticated mode active
+                const currentPanel = document.querySelector('.panel.active');
+                if (currentPanel) {
+                    const currentMode = currentPanel.id.replace('-panel', '');
+                    document.querySelector(`[onclick="switchMode('${currentMode}')"]`).classList.add('active');
+                }
+            } else {
+                // Default to player mode
+                document.querySelector(`[onclick="switchMode('player')"]`).classList.add('active');
+            }
+        }
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('password-input').value.trim();
+            const correctPassword = getStoredPassword();
+            const modalContent = document.querySelector('.password-modal-content');
+            
+            if (enteredPassword === correctPassword) {
+                // Correct password
+                isAuthenticated = true;
+                modalContent.classList.remove('access-denied');
+                modalContent.classList.add('access-granted');
+                
+                setTimeout(() => {
+                    closePasswordModal();
+                    if (pendingMode) {
+                        actualSwitchMode(pendingMode);
+                    }
+                }, 500);
+            } else {
+                // Wrong password
+                modalContent.classList.remove('access-granted');
+                modalContent.classList.add('access-denied');
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').placeholder = 'Wrong password - try again';
+                
+                setTimeout(() => {
+                    modalContent.classList.remove('access-denied');
+                    document.getElementById('password-input').placeholder = 'Enter password';
+                }, 2000);
+            }
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('current-password').value.trim();
+            const newPassword = document.getElementById('new-password').value.trim();
+            const storedPassword = getStoredPassword();
+            
+            if (!currentPassword || !newPassword) {
+                alert('Please fill in both password fields!');
+                return;
+            }
+            
+            if (currentPassword !== storedPassword) {
+                alert('Current password is incorrect!');
+                return;
+            }
+            
+            if (newPassword.length < 3) {
+                alert('New password must be at least 3 characters long!');
+                return;
+            }
+            
+            setStoredPassword(newPassword);
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            
+            alert('Password changed successfully! 🔒\n\nNew password: ' + newPassword + '\n\nMake sure to share this with other teachers who need access.');
+        }
+
+        // Mode switching with authentication
+        function switchMode(mode) {
+            // Check if authentication is required
+            if (requiresAuthentication(mode) && !isAuthenticated) {
+                showPasswordModal(mode);
+                return;
+            }
+            
+            actualSwitchMode(mode);
+        }
+
+        function actualSwitchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[onclick="switchMode('${mode}')"]`).classList.add('active');
+
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(mode + '-panel').classList.add('active');
+
+            if (mode === 'presenter') {
+                startGameSync();
+            }
+            
+            // Reset authentication for player mode (students can always access)
+            if (mode === 'player') {
+                isAuthenticated = false;
+            }
+        }
+
+        // Question Type Toggle
+        function toggleQuestionType() {
+            const type = document.getElementById('question-type').value;
+            const choicesSection = document.getElementById('choices-section');
+            
+            if (type === 'multiple') {
+                choicesSection.classList.add('active');
+            } else {
+                choicesSection.classList.remove('active');
+            }
+        }
+
+        // Player Functions
+        function joinGame() {
+            const gameIdInput = document.getElementById('game-id-input').value.trim().toUpperCase();
+            const playerName = document.getElementById('player-name').value.trim();
+            
+            if (!gameIdInput) {
+                alert('Please enter a Room ID!');
+                return;
+            }
+            
+            if (!playerName) {
+                alert('Please enter your team name!');
+                return;
+            }
+
+            // Check if the room exists by trying to load its data
+            const roomData = localStorage.getItem(`game_${gameIdInput}`);
+            if (!roomData) {
+                alert(`Room "${gameIdInput}" not found! Please check the Room ID with your teacher.`);
+                return;
+            }
+
+            // Switch to the entered room
+            GAME_ID = gameIdInput;
+            localStorage.setItem('current-game-id', GAME_ID);
+            
+            const gameData = getGameData();
+            
+            // Check if team already exists
+            const existingTeam = gameData.teams.find(team => 
+                team.name.toLowerCase() === playerName.toLowerCase()
+            );
+            
+            if (existingTeam) {
+                alert('A team with that name already exists in this room!');
+                return;
+            }
+
+            // Add team to game
+            currentTeamId = Date.now();
+            const newTeam = {
+                id: currentTeamId,
+                name: playerName,
+                score: 0,
+                buzzed: false,
+                buzzTime: null,
+                wager: 0,
+                wagerLocked: false,
+                avatar: '🎯'
+            };
+
+            gameData.teams.push(newTeam);
+            saveGameData(gameData);
+
+            document.getElementById('player-setup').style.display = 'none';
+            document.getElementById('buzzer-area').style.display = 'block';
+            document.getElementById('team-name-display').textContent = playerName;
+            document.getElementById('team-avatar').textContent = '🎯';
+            
+            startGameSync();
+        }
+
+        function leaveGame() {
+            if (currentTeamId) {
+                const gameData = getGameData();
+                gameData.teams = gameData.teams.filter(team => team.id !== currentTeamId);
+                saveGameData(gameData);
+            }
+            
+            currentTeamId = null;
+            
+            document.getElementById('player-setup').style.display = 'block';
+            document.getElementById('buzzer-area').style.display = 'none';
+            document.getElementById('game-id-input').value = '';
+            document.getElementById('player-name').value = '';
+        }
+
+        function buzzIn() {
+            if (!currentTeamId) return;
+            
+            const gameData = getGameData();
+            if (gameData.buzzersLocked) return;
+
+            const team = gameData.teams.find(t => t.id === currentTeamId);
+            if (!team || team.buzzed) return;
+
+            team.buzzed = true;
+            team.buzzTime = Date.now();
+            gameData.buzzOrder.push(currentTeamId);
+
+            saveGameData(gameData);
+        }
+
+        // Presenter Functions
+        function nextQuestion() {
+            const gameData = getGameData();
+
+            if (gameData.currentQuestion < gameData.questions.length - 1) {
+                gameData.currentQuestion++;
+                resetBuzzersData(gameData);
+                gameData.showingAnswer = false;
+                saveGameData(gameData);
+                stopTimer(); // Stop any running timer
+            }
+        }
+
+        function previousQuestion() {
+            const gameData = getGameData();
+
+            if (gameData.currentQuestion > 0) {
+                gameData.currentQuestion--;
+                resetBuzzersData(gameData);
+                gameData.showingAnswer = false;
+                saveGameData(gameData);
+                stopTimer(); // Stop any running timer
+            }
+        }
+
+        function showAnswer() {
+            const gameData = getGameData();
+            gameData.showingAnswer = !gameData.showingAnswer;
+            saveGameData(gameData);
+        }
+
+        function lockBuzzers() {
+            const gameData = getGameData();
+            gameData.buzzersLocked = true;
+            saveGameData(gameData);
+        }
+
+        function unlockBuzzers() {
+            const gameData = getGameData();
+            gameData.buzzersLocked = false;
+            saveGameData(gameData);
+        }
+
+        function resetBuzzers() {
+            const gameData = getGameData();
+            resetBuzzersData(gameData);
+            saveGameData(gameData);
+        }
+
+        function resetBuzzersData(gameData) {
+            gameData.teams.forEach(team => {
+                team.buzzed = false;
+                team.buzzTime = null;
+            });
+            gameData.buzzOrder = [];
+            gameData.selectedTeam = null;
+        }
+
+        function addPoint() {
+            const gameData = getGameData();
+            if (!gameData.selectedTeam) {
+                alert('Please select a team first by clicking on their card!');
+                return;
+            }
+
+            const team = gameData.teams.find(t => t.id === gameData.selectedTeam);
+            if (team) {
+                team.score++;
+                saveGameData(gameData);
+                
+                // Trigger celebration effect
+                const teamElement = document.querySelector(`[onclick="selectTeam(${team.id})"]`);
+                if (teamElement) {
+                    celebrateCorrectAnswer(teamElement);
+                }
+            }
+        }
+
+        function subtractPoint() {
+            const gameData = getGameData();
+            if (!gameData.selectedTeam) {
+                alert('Please select a team first by clicking on their card!');
+                return;
+            }
+
+            const team = gameData.teams.find(t => t.id === gameData.selectedTeam);
+            if (team && team.score > 0) {
+                team.score--;
+                saveGameData(gameData);
+            }
+        }
+
+        function selectTeam(teamId) {
+            const gameData = getGameData();
+            gameData.selectedTeam = teamId;
+            saveGameData(gameData);
+        }
+
+        function newGame() {
+            if (confirm('Start a new game? This will reset all scores and remove all teams.')) {
+                localStorage.removeItem(`game_${GAME_ID}`);
+                currentTeamId = null;
+                stopTimer();
+                stopQuickfire();
+                
+                // Reset player interface if they were joined
+                document.getElementById('player-setup').style.display = 'block';
+                document.getElementById('buzzer-area').style.display = 'none';
+                document.getElementById('game-id-input').value = '';
+                document.getElementById('player-name').value = '';
+                
+                updateAllDisplays();
+            }
+        }
+
+        // Game Mode Functions
+        function setGameMode(mode) {
+            currentGameMode = mode;
+            const gameData = getGameData();
+            gameData.gameMode = mode;
+            
+            // Reset mode-specific states
+            if (mode !== 'wager') {
+                gameData.wageringEnabled = false;
+                gameData.wagersLocked = false;
+            }
+            if (mode !== 'challenge') {
+                gameData.challengeProgress = 0;
+            }
+            
+            saveGameData(gameData);
+            
+            // Update UI
+            document.querySelectorAll('.game-mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update mode indicator
+            const modeNames = {
+                'standard': 'Standard Mode',
+                'wager': 'Wager Mode',
+                'bonus': 'Bonus Round',
+                'challenge': 'Team Challenge',
+                'quickfire': 'Quick Fire'
+            };
+            document.getElementById('mode-indicator').textContent = modeNames[mode];
+            
+            // Start quickfire if selected
+            if (mode === 'quickfire') {
+                startQuickfire();
+            } else {
+                stopQuickfire();
+            }
+            
+            updateAllDisplays();
+        }
+
+        // Wager System Functions
+        function enableWagers() {
+            const gameData = getGameData();
+            gameData.wageringEnabled = true;
+            gameData.wagersLocked = false;
+            
+            // Reset all team wagers
+            gameData.teams.forEach(team => {
+                team.wager = 0;
+                team.wagerLocked = false;
+            });
+            
+            saveGameData(gameData);
+        }
+
+        function showWagers() {
+            const gameData = getGameData();
+            let wagerInfo = 'Team Wagers:\n\n';
+            
+            gameData.teams.forEach(team => {
+                const wagerText = team.wager === 'all' ? `All In (${team.score} pts)` : `${team.wager} pts`;
+                wagerInfo += `${team.name}: ${team.wagerLocked ? wagerText : 'Not set'}\n`;
+            });
+            
+            alert(wagerInfo);
+        }
+
+        function lockWagers() {
+            const gameData = getGameData();
+            gameData.wagersLocked = true;
+            saveGameData(gameData);
+        }
+
+        function selectWager(amount) {
+            if (!currentTeamId) return;
+            
+            const gameData = getGameData();
+            if (!gameData.wageringEnabled || gameData.wagersLocked) return;
+            
+            const team = gameData.teams.find(t => t.id === currentTeamId);
+            if (!team || team.wagerLocked) return;
+            
+            // Validate wager amount
+            if (amount === 'all') {
+                if (team.score <= 0) {
+                    alert('You need points to go all in!');
+                    return;
+                }
+                team.wager = 'all';
+            } else {
+                if (amount > team.score) {
+                    alert('You cannot wager more points than you have!');
+                    return;
+                }
+                team.wager = amount;
+            }
+            
+            team.wagerLocked = true;
+            saveGameData(gameData);
+        }
+
+        // Challenge Mode Functions
+        function updateChallengeProgress(percentage) {
+            const gameData = getGameData();
+            gameData.challengeProgress = Math.min(100, Math.max(0, percentage));
+            saveGameData(gameData);
+        }
+
+        // Quick Fire Functions
+        function startQuickfire() {
+            quickfireTime = 10;
+            updateQuickfireDisplay();
+            
+            if (quickfireInterval) clearInterval(quickfireInterval);
+            
+            quickfireInterval = setInterval(() => {
+                quickfireTime--;
+                updateQuickfireDisplay();
+                
+                if (quickfireTime <= 0) {
+                    stopQuickfire();
+                    // Auto-advance to next question
+                    setTimeout(nextQuestion, 1000);
+                }
+            }, 1000);
+        }
+
+        function stopQuickfire() {
+            if (quickfireInterval) {
+                clearInterval(quickfireInterval);
+                quickfireInterval = null;
+            }
+        }
+
+        function updateQuickfireDisplay() {
+            const display = document.getElementById('quickfire-timer');
+            if (display) {
+                display.textContent = quickfireTime;
+                if (quickfireTime <= 3) {
+                    display.classList.add('critical');
+                } else {
+                    display.classList.remove('critical');
+                }
+            }
+        }
+
+        // Quiz Builder Functions
+        function addQuestion() {
+            const questionText = document.getElementById('question-input').value.trim();
+            const answerText = document.getElementById('answer-input').value.trim();
+            const questionType = document.getElementById('question-type').value;
+
+            if (!questionText) {
+                alert('Please enter a question!');
+                return;
+            }
+
+            if (!answerText) {
+                alert('Please enter an answer!');
+                return;
+            }
+
+            const gameData = getGameData();
+            const newQuestion = {
+                text: questionText,
+                answer: answerText,
+                type: questionType
+            };
+
+            if (questionType === 'multiple') {
+                const choiceA = document.getElementById('choice-a').value.trim();
+                const choiceB = document.getElementById('choice-b').value.trim();
+                const choiceC = document.getElementById('choice-c').value.trim();
+                const choiceD = document.getElementById('choice-d').value.trim();
+                const correctChoice = document.querySelector('input[name="correct-choice"]:checked');
+
+                if (!choiceA || !choiceB || !choiceC || !choiceD) {
+                    alert('Please fill in all four choices!');
+                    return;
+                }
+
+                if (!correctChoice) {
+                    alert('Please select the correct answer!');
+                    return;
+                }
+
+                newQuestion.choices = [choiceA, choiceB, choiceC, choiceD];
+                newQuestion.correctChoice = correctChoice.value;
+
+                // Clear choice inputs
+                document.getElementById('choice-a').value = '';
+                document.getElementById('choice-b').value = '';
+                document.getElementById('choice-c').value = '';
+                document.getElementById('choice-d').value = '';
+                document.querySelector('input[name="correct-choice"]:checked').checked = false;
+            }
+
+            gameData.questions.push(newQuestion);
+
+            document.getElementById('question-input').value = '';
+            document.getElementById('answer-input').value = '';
+            
+            saveGameData(gameData);
+            updateAllDisplays();
+        }
+
+        function removeQuestion(index) {
+            const gameData = getGameData();
+            gameData.questions.splice(index, 1);
+            if (gameData.currentQuestion >= gameData.questions.length) {
+                gameData.currentQuestion = Math.max(0, gameData.questions.length - 1);
+            }
+            
+            saveGameData(gameData);
+            updateAllDisplays();
+        }
+
+        function clearQuiz() {
+            if (!confirm('Are you sure you want to clear all questions?')) return;
+            
+            const gameData = getGameData();
+            gameData.questions = [];
+            gameData.currentQuestion = 0;
+            
+            saveGameData(gameData);
+            updateAllDisplays();
+        }
+
+        function loadSampleQuiz() {
+            const gameData = getGameData();
+            gameData.questions = [
+                { 
+                    text: "What is the capital of Australia?", 
+                    answer: "Canberra",
+                    type: "open"
+                },
+                { 
+                    text: "How many sides does a hexagon have?", 
+                    answer: "6",
+                    type: "multiple",
+                    choices: ["4", "5", "6", "8"],
+                    correctChoice: "C"
+                },
+                { 
+                    text: "What gas do plants absorb from the atmosphere?", 
+                    answer: "Carbon dioxide",
+                    type: "open"
+                },
+                { 
+                    text: "Who wrote 'Romeo and Juliet'?", 
+                    answer: "William Shakespeare",
+                    type: "multiple",
+                    choices: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                    correctChoice: "B"
+                },
+                { 
+                    text: "What is the largest planet in our solar system?", 
+                    answer: "Jupiter",
+                    type: "multiple",
+                    choices: ["Mars", "Jupiter", "Saturn", "Neptune"],
+                    correctChoice: "B"
+                },
+                { 
+                    text: "In which year did World War II end?", 
+                    answer: "1945",
+                    type: "open"
+                },
+                { 
+                    text: "What is the chemical symbol for gold?", 
+                    answer: "Au",
+                    type: "multiple",
+                    choices: ["Go", "Gd", "Au", "Ag"],
+                    correctChoice: "C"
+                }
+            ];
+            
+            saveGameData(gameData);
+            updateAllDisplays();
+        }
+
+        // Display Updates
+        function updateAllDisplays() {
+            const gameData = getGameData();
+            updatePresenterDisplay(gameData);
+            updateTeamsDisplay(gameData);
+            updatePlayerStatus(gameData);
+            updateQuestionsDisplay(gameData);
+            updateProgressBar();
+        }
+
+        function updatePresenterDisplay(gameData) {
+            const currentQ = gameData.questions[gameData.currentQuestion];
+            const questionText = currentQ ? currentQ.text : 'No questions available. Use Quiz Builder to add questions!';
+            
+            document.getElementById('current-question-text').textContent = questionText;
+            document.getElementById('current-q-num').textContent = gameData.currentQuestion + 1;
+            document.getElementById('total-questions').textContent = Math.max(1, gameData.questions.length);
+
+            // Update multiple choice display
+            const mcDisplay = document.getElementById('multiple-choice-display');
+            if (currentQ && currentQ.type === 'multiple') {
+                mcDisplay.style.display = 'grid';
+                const choices = ['A', 'B', 'C', 'D'];
+                mcDisplay.innerHTML = currentQ.choices.map((choice, index) => {
+                    const letter = choices[index];
+                    const isCorrect = gameData.showingAnswer && letter === currentQ.correctChoice;
+                    return `
+                        <div class="choice-option ${isCorrect ? 'correct' : ''}">
+                            <span class="choice-label">${letter})</span>
+                            ${choice}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                mcDisplay.style.display = 'none';
+            }
+
+            // Update game mode sections
+            const wagerSection = document.getElementById('wager-section');
+            const bonusIndicator = document.getElementById('bonus-indicator');
+            const challengeSection = document.getElementById('challenge-section');
+            const quickfireSection = document.getElementById('quickfire-section');
+
+            // Hide all sections first
+            wagerSection.style.display = 'none';
+            bonusIndicator.style.display = 'none';
+            challengeSection.style.display = 'none';
+            quickfireSection.style.display = 'none';
+
+            // Show relevant section based on current mode or question type
+            if (gameData.gameMode === 'wager' || (currentQ && currentQ.type === 'wager')) {
+                wagerSection.style.display = 'block';
+            }
+            if (gameData.gameMode === 'bonus' || (currentQ && currentQ.type === 'bonus')) {
+                bonusIndicator.style.display = 'block';
+            }
+            if (gameData.gameMode === 'challenge' || (currentQ && currentQ.type === 'challenge')) {
+                challengeSection.style.display = 'block';
+                document.getElementById('challenge-progress').style.width = gameData.challengeProgress + '%';
+                document.getElementById('challenge-percentage').textContent = gameData.challengeProgress;
+            }
+            if (gameData.gameMode === 'quickfire' || (currentQ && currentQ.type === 'quickfire')) {
+                quickfireSection.style.display = 'block';
+            }
+        }
+
+        function updateTeamsDisplay(gameData) {
+            const container = document.getElementById('teams-display');
+            
+            if (gameData.teams.length === 0) {
+                container.innerHTML = `<div style="text-align: center; grid-column: 1/-1;"><p>No teams joined yet. Students should use Room ID: <strong>${GAME_ID}</strong></p></div>`;
+                return;
+            }
+
+            // Sort teams by buzz order for display
+            const sortedTeams = [...gameData.teams].sort((a, b) => {
+                if (a.buzzed && b.buzzed) {
+                    return gameData.buzzOrder.indexOf(a.id) - gameData.buzzOrder.indexOf(b.id);
+                }
+                if (a.buzzed) return -1;
+                if (b.buzzed) return 1;
+                return 0;
+            });
+
+            // Only update if content has actually changed
+            const newContent = sortedTeams.map(team => {
+                const buzzPosition = team.buzzed ? gameData.buzzOrder.indexOf(team.id) + 1 : null;
+                const isSelected = gameData.selectedTeam === team.id;
+                
+                // Show wager info if in wager mode
+                let wagerInfo = '';
+                if (gameData.gameMode === 'wager' && gameData.wageringEnabled) {
+                    if (team.wagerLocked) {
+                        const wagerText = team.wager === 'all' ? `All In (${team.score})` : `${team.wager} pts`;
+                        wagerInfo = `<div class="buzz-indicator">Wagered: ${wagerText}</div>`;
+                    } else {
+                        wagerInfo = `<div class="buzz-indicator">Setting wager...</div>`;
+                    }
+                }
+                
+                return `
+                    <div class="team-card ${team.buzzed ? 'buzzed' : ''} ${isSelected ? 'selected' : ''}" 
+                         onclick="selectTeam(${team.id})" data-team-id="${team.id}">
+                        <div class="team-avatar">${team.avatar || '🎯'}</div>
+                        <div class="team-name">${team.name}</div>
+                        <div class="team-score">${team.score}</div>
+                        ${team.buzzed ? `<div class="buzz-indicator">Buzzed #${buzzPosition}!</div>` : ''}
+                        ${wagerInfo}
+                    </div>
+                `;
+            }).join('');
+
+            // Only update DOM if content changed
+            if (container.innerHTML !== newContent) {
+                container.innerHTML = newContent;
+            }
+        }
+
+        function updatePlayerStatus(gameData) {
+            if (!currentTeamId) return;
+            
+            const buzzBtn = document.getElementById('buzz-btn');
+            const statusDiv = document.getElementById('player-status');
+            const wagerSection = document.getElementById('player-wager-section');
+            const playerScore = document.getElementById('player-score');
+            
+            if (!buzzBtn || !statusDiv) return;
+
+            const team = gameData.teams.find(t => t.id === currentTeamId);
+            if (!team) return;
+
+            // Update player score display
+            if (playerScore) {
+                playerScore.textContent = team.score;
+            }
+
+            // Show/hide wager section
+            if (wagerSection) {
+                if (gameData.gameMode === 'wager' && gameData.wageringEnabled && !gameData.wagersLocked) {
+                    wagerSection.style.display = 'block';
+                    
+                    // Update wager buttons
+                    document.querySelectorAll('.wager-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                        if (team.wagerLocked) {
+                            btn.disabled = true;
+                        } else {
+                            btn.disabled = false;
+                        }
+                    });
+                    
+                    // Update wager status
+                    const wagerStatus = document.getElementById('wager-status');
+                    if (wagerStatus) {
+                        if (team.wagerLocked) {
+                            const wagerText = team.wager === 'all' ? `All In (${team.score} pts)` : `${team.wager} pts`;
+                            wagerStatus.textContent = `Wager locked: ${wagerText}`;
+                        } else if (gameData.wagersLocked) {
+                            wagerStatus.textContent = 'Wagering period ended';
+                        } else {
+                            wagerStatus.textContent = 'Select your wager amount';
+                        }
+                    }
+                } else {
+                    wagerSection.style.display = 'none';
+                }
+            }
+
+            // Update buzzer status
+            if (gameData.buzzersLocked) {
+                buzzBtn.disabled = true;
+                buzzBtn.classList.remove('buzzed');
+                statusDiv.textContent = 'Buzzers are locked by presenter';
+            } else if (team.buzzed) {
+                // Only disable THIS team's buzzer, not all buzzers
+                buzzBtn.disabled = true;
+                buzzBtn.classList.add('buzzed');
+                const position = gameData.buzzOrder.indexOf(team.id) + 1;
+                statusDiv.textContent = `You buzzed in! Position: #${position}`;
+            } else {
+                // Keep buzzer enabled for teams that haven't buzzed yet
+                buzzBtn.disabled = false;
+                buzzBtn.classList.remove('buzzed');
+                
+                // Update status based on game mode
+                if (gameData.gameMode === 'quickfire') {
+                    statusDiv.textContent = 'Quick Fire! Buzz fast!';
+                } else if (gameData.gameMode === 'bonus') {
+                    statusDiv.textContent = 'Bonus Round - Double Points!';
+                } else if (gameData.gameMode === 'challenge') {
+                    statusDiv.textContent = 'Team Challenge - Work together!';
+                } else {
+                    statusDiv.textContent = 'Ready to buzz in!';
+                }
+            }
+        }
+
+        function updateQuestionsDisplay(gameData) {
+            const container = document.getElementById('questions-container');
+            const countSpan = document.getElementById('question-count');
+            
+            countSpan.textContent = gameData.questions.length;
+            
+            if (gameData.questions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; opacity: 0.7;">No questions added yet. Add some questions to get started!</p>';
+                return;
+            }
+
+            container.innerHTML = gameData.questions.map((q, index) => {
+                const typeIcons = {
+                    'open': '🎯',
+                    'multiple': '📝',
+                    'bonus': '🏆',
+                    'challenge': '🤝',
+                    'quickfire': '⚡'
+                };
+                const typeIcon = typeIcons[q.type] || '🎯';
+                
+                const choicesText = q.type === 'multiple' ? 
+                    `<br><small><strong>Choices:</strong> A) ${q.choices[0]} B) ${q.choices[1]} C) ${q.choices[2]} D) ${q.choices[3]}</small>
+                     <br><small><strong>Correct:</strong> ${q.correctChoice}) ${q.choices[q.correctChoice.charCodeAt(0) - 65]}</small>` : '';
+                
+                const typeText = q.type.charAt(0).toUpperCase() + q.type.slice(1);
+                
+                return `
+                    <div class="question-item">
+                        <div class="question-preview">
+                            <strong>${typeIcon} Q${index + 1} (${typeText}):</strong> ${q.text.substring(0, 100)}${q.text.length > 100 ? '...' : ''}
+                            <br><small><strong>Answer:</strong> ${q.answer}</small>
+                            ${choicesText}
+                        </div>
+                        <div class="question-actions">
+                            <button class="btn-small btn-danger" onclick="removeQuestion(${index})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Start sync loop to update displays
+        function startGameSync() {
+            if (updateInterval) clearInterval(updateInterval);
+            
+            updateInterval = setInterval(() => {
+                updateAllDisplays();
+            }, 2000); // Reduced from 500ms to 2000ms to prevent flashing
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update UI with current game ID
+            document.getElementById('game-id').textContent = GAME_ID;
+            document.getElementById('game-id-input').value = GAME_ID;
+            
+            loadTheme();
+            updateAllDisplays();
+            updateTimerDisplay();
+            startGameSync();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97a40891204fed77',t:'MTc1NzA1NzU1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
